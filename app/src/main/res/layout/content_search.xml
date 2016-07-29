@@ -12,11 +12,20 @@
     tools:context=".activities.SearchActivity"
     tools:showIn="@layout/activity_search">
 
-    /*
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/rvNYTSearch"
+    <android.support.v4.widget.SwipeRefreshLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/swipeContainer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/rvNYTSearch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true" />
+
+    </android.support.v4.widget.SwipeRefreshLayout>
 
 </RelativeLayout>

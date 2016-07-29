@@ -123,4 +123,16 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ViewHold
     public int getItemCount() {
         return mArticles.size();
     }
+
+    // Clean all elements of the recycler
+    public void clear() {
+        mArticles.clear();
+        notifyDataSetChanged();
+    }
+
+    // Add a list of items
+    public void addAll(List<Article> newArticles) {
+        mArticles.addAll(newArticles);
+        notifyDataSetChanged();
+    }
 }

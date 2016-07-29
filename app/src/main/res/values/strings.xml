@@ -15,4 +15,5 @@
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
     <string name="send_to">Share URL to...</string>
+    <string name="enter_a_keyword_to_search">Enter a keyword to search...</string>
 </resources>

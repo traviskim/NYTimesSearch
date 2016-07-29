@@ -3,6 +3,7 @@ package com.traviswkim.nytimessearch.activities;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
@@ -45,6 +46,9 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
     SimpleDateFormat dspSdf = new SimpleDateFormat("MM/dd/yyyy");
     SimpleDateFormat paramSdf = new SimpleDateFormat("yyyyMMdd");
     SearchSetting ss = new SearchSetting("", "", false, false, false);
+    private SwipeRefreshLayout swipeContainer;
+    String searchQuery;
+
 
 
     @Override
@@ -54,7 +58,7 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         setupViews();
-        onArticleSearch("");
+        onArticleSearch("", true);
     }
 
     public void setupViews(){
@@ -67,6 +71,23 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
         StaggeredGridLayoutManager gridLayoutManager = new StaggeredGridLayoutManager(3, StaggeredGridLayoutManager.VERTICAL);
         gridLayoutManager.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS);
         rvArticle.setLayoutManager(gridLayoutManager);
+
+        // Lookup the swipe container view
+        swipeContainer = (SwipeRefreshLayout) findViewById(R.id.swipeContainer);
+        // Setup refresh listener which triggers new data loading
+        swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener(){
+            @Override
+            public void onRefresh() {
+                onArticleSearch(searchQuery, true);
+            }
+        });
+        // Configure the refreshing colors
+        swipeContainer.setColorSchemeResources(android.R.color.holo_blue_bright,
+                android.R.color.holo_green_light,
+                android.R.color.holo_orange_light,
+                android.R.color.holo_red_light);
+
+
     }
 
     @Override
@@ -81,13 +102,19 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
             @Override
             public boolean onQueryTextSubmit(String query) {
                 searchView.clearFocus();
-                onArticleSearch(query);
+                searchQuery = query;
+                onArticleSearch(query, true);
                 return true;
             }
 
             @Override
             public boolean onQueryTextChange(String query) {
-                return false;
+                if(query.trim() == ""){
+                    onArticleSearch("", true);
+                    return true;
+                }else {
+                    return false;
+                }
             }
         });
         return super.onCreateOptionsMenu(menu);
@@ -116,7 +143,7 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
         }
     }
 
-    public void onArticleSearch(String query) {
+    public void onArticleSearch(String query, final boolean isNew) {
         //if(NetworkUtil.isNetworkConnected(SearchActivity.this)) {
             //String query = etQuery.getText().toString();
             client = new AsyncHttpClient();
@@ -166,10 +193,18 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
                     JSONArray articleJsonResults = null;
                     try {
                         articleJsonResults = response.getJSONObject("response").getJSONArray("docs");
-                        //articles.clear();
+                        if(isNew) {
+                            articles.clear();
+                            articleAdapter.clear();
+                        }
                         int curSize = articleAdapter.getItemCount();
                         articles.addAll(Article.fromJsonArray(articleJsonResults));
-                        articleAdapter.notifyItemRangeInserted(curSize, articleJsonResults.length());
+                        if(isNew){
+                            articleAdapter.notifyDataSetChanged();
+                        }else {
+                            articleAdapter.notifyItemRangeInserted(curSize, articleJsonResults.length());
+                        }
+                        swipeContainer.setRefreshing(false);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
