@@ -15,7 +15,7 @@ public class NetworkUtil {
     public static boolean isNetworkConnected(Context context) {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = cm.getActiveNetworkInfo();
-        if (networkInfo != null && networkInfo.isConnected() == true) {
+        if (networkInfo != null && networkInfo.isConnectedOrConnecting()) {
             //Toast.makeText(context, "Internet is available", Toast.LENGTH_SHORT).show();
             return true;
         } else {

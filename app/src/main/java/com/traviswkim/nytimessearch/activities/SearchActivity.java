@@ -1,45 +1,51 @@
 package com.traviswkim.nytimessearch.activities;
 
-import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.GridView;
-import android.support.v7.widget.SearchView;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 import com.traviswkim.nytimessearch.R;
-import com.traviswkim.nytimessearch.adapters.ArticleArrayAdapter;
+import com.traviswkim.nytimessearch.adapters.ArticleAdapter;
+import com.traviswkim.nytimessearch.fragments.SettingsDialogFragment;
 import com.traviswkim.nytimessearch.models.Article;
-import com.traviswkim.nytimessearch.utils.NetworkUtil;
+import com.traviswkim.nytimessearch.models.SearchSetting;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.util.TextUtils;
 
-public class SearchActivity extends AppCompatActivity {
+public class SearchActivity extends AppCompatActivity implements SettingsDialogFragment.SettingsDialogListener {
 
     ArrayList<Article> articles;
-    ArrayAdapter<Article> articleAdapter;
-    EditText etQuery;
-    GridView gvResults;
-    Button btnSearch;
+    //ArrayAdapter<Article> articleAdapter;
+    RecyclerView rvArticle;
+    ArticleAdapter articleAdapter;
+    //GridView gvResults;
+    AsyncHttpClient client;
+    SimpleDateFormat dspSdf = new SimpleDateFormat("MM/dd/yyyy");
+    SimpleDateFormat paramSdf = new SimpleDateFormat("yyyyMMdd");
+    SearchSetting ss = new SearchSetting("", "", false, false, false);
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,25 +54,19 @@ public class SearchActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         setupViews();
+        onArticleSearch("");
     }
 
     public void setupViews(){
-        etQuery = (EditText) findViewById(R.id.etQuery);
-        gvResults = (GridView) findViewById(R.id.gvResults);
-        btnSearch = (Button) findViewById(R.id.btnSearch);
+        //gvResults = (GridView) findViewById(R.id.gvResults);
         articles = new ArrayList<>();
-        articleAdapter = new ArticleArrayAdapter(this, articles);
-        gvResults.setAdapter(articleAdapter);
-        //Hook up listener for the grid click
-        gvResults.setOnItemClickListener(new AdapterView.OnItemClickListener(){
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent i = new Intent(getApplicationContext(), ArticleActivity.class);
-                Article article = articles.get(position);
-                i.putExtra("article", article);
-                startActivity(i);
-            }
-        });
+        articleAdapter = new ArticleAdapter(this, articles);
+        //gvResults.setAdapter(articleAdapter);
+        rvArticle = (RecyclerView) findViewById(R.id.rvNYTSearch);
+        rvArticle.setAdapter(articleAdapter);
+        StaggeredGridLayoutManager gridLayoutManager = new StaggeredGridLayoutManager(3, StaggeredGridLayoutManager.VERTICAL);
+        gridLayoutManager.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS);
+        rvArticle.setLayoutManager(gridLayoutManager);
     }
 
     @Override
@@ -74,17 +74,19 @@ public class SearchActivity extends AppCompatActivity {
         // Inflate the menu; this adds items to the action bar if it is present.
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu_search, menu);
+
         MenuItem searchItem = menu.findItem(R.id.action_search);
         final SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 searchView.clearFocus();
+                onArticleSearch(query);
                 return true;
             }
 
             @Override
-            public boolean onQueryTextChange(String newText) {
+            public boolean onQueryTextChange(String query) {
                 return false;
             }
         });
@@ -99,24 +101,64 @@ public class SearchActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_search) {
-            return true;
-        }
+        switch(id){
+            case R.id.action_search:
+                return true;
+            case R.id.action_settings:
+                //FragmentManager fm = getSupportFragmentManager();
+                //SettingsDialogFragment editTaskDialogFragment = SettingsDialogFragment.newInstance(ss);
+                //editTaskDialogFragment.show(fm, "fragment_edit_name");
+                showEditDialog();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
 
-        return super.onOptionsItemSelected(item);
+        }
     }
 
-    public void onArticleSearch(View view) {
-        if(NetworkUtil.isNetworkConnected(SearchActivity.this)) {
-            String query = etQuery.getText().toString();
-            AsyncHttpClient client = new AsyncHttpClient();
-            String url = "";
+    public void onArticleSearch(String query) {
+        //if(NetworkUtil.isNetworkConnected(SearchActivity.this)) {
+            //String query = etQuery.getText().toString();
+            client = new AsyncHttpClient();
+            String url = "https://api.nytimes.com/svc/search/v2/articlesearch.json";
 
             RequestParams params = new RequestParams();
             params.put("api-key", "0fea1f783cd3445fb99d624c768ebb8b");
+            if(!TextUtils.isEmpty(ss.getBeginDate())) {
+                try {
+                    Date sDate = dspSdf.parse(ss.getBeginDate());
+                    params.put("begin_date", paramSdf.format(sDate));
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            }
+            if(!TextUtils.isEmpty(ss.getSortOrder())) {
+                params.put("sort", ss.getSortOrder());
+            }
             params.put("page", 0);
-            params.put("q", query);
-
+            if(!TextUtils.isEmpty(query)) {
+                params.put("q", query);
+            }
+            StringBuffer sb = new StringBuffer();
+            if(ss.isArts()){
+                sb.append("\"Arts\"");
+            }
+            if(ss.isFasionStyle()){
+                if(sb.length() > 0) {
+                    sb.append(" ");
+                }
+                sb.append("\"Fashion & Style\"");
+            }
+            if(ss.isSports()){
+                if(sb.length() > 0) {
+                    sb.append(" ");
+                }
+                sb.append("\"Sports\"");
+            }
+            if(sb.length() > 0){
+                params.put("fq", "news_desk:(" + sb.toString()+ ")");
+            }
+            Log.d("DEBUG", url + params.toString());
             client.get(url, params, new JsonHttpResponseHandler() {
                 @Override
                 public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
@@ -124,8 +166,10 @@ public class SearchActivity extends AppCompatActivity {
                     JSONArray articleJsonResults = null;
                     try {
                         articleJsonResults = response.getJSONObject("response").getJSONArray("docs");
-                        articleAdapter.addAll(Article.fromJsonArray(articleJsonResults));
-                        Log.d("DEBUG", articles.toString());
+                        //articles.clear();
+                        int curSize = articleAdapter.getItemCount();
+                        articles.addAll(Article.fromJsonArray(articleJsonResults));
+                        articleAdapter.notifyItemRangeInserted(curSize, articleJsonResults.length());
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -136,7 +180,21 @@ public class SearchActivity extends AppCompatActivity {
                     super.onFailure(statusCode, headers, throwable, errorResponse);
                 }
             });
-        }
+        //}
 
+    }
+
+    private void showEditDialog() {
+        FragmentManager fm = getSupportFragmentManager();
+        SettingsDialogFragment settingsDialogFragment = SettingsDialogFragment.newInstance(ss);
+        settingsDialogFragment.show(fm, "settings_fragment");
+    }
+
+    public void onFinishInputDialog(SearchSetting newSs) {
+        this.ss.setBeginDate(newSs.getBeginDate());
+        this.ss.setSortOrder(newSs.getSortOrder());
+        this.ss.setArts(newSs.isArts());
+        this.ss.setFasionStyle(newSs.isFasionStyle());
+        this.ss.setSports(newSs.isSports());
     }
 }
