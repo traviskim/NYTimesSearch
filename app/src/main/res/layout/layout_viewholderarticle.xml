@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?android:attr/selectableItemBackground">
+
+    <com.traviswkim.nytimessearch.utils.DynamicHeightImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/ivImage"
+        android:src="@mipmap/ic_launcher"
+        android:scaleType="center"
+        android:layout_marginTop="10dp" />
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Title"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:textStyle="bold"
+        android:textSize="17dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Snippet"
+        android:id="@+id/tvSnippet"
+        android:lines="8" />
+</LinearLayout>

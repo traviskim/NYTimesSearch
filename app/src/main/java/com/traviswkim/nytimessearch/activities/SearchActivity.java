@@ -18,10 +18,13 @@ import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 import com.traviswkim.nytimessearch.R;
+import com.traviswkim.nytimessearch.SpacesItemDecoration;
 import com.traviswkim.nytimessearch.adapters.ArticleAdapter;
 import com.traviswkim.nytimessearch.fragments.SettingsDialogFragment;
 import com.traviswkim.nytimessearch.models.Article;
 import com.traviswkim.nytimessearch.models.SearchSetting;
+import com.traviswkim.nytimessearch.utils.EndlessRecyclerViewScrollListener;
+import com.traviswkim.nytimessearch.utils.NetworkUtil;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -34,6 +37,7 @@ import java.util.Date;
 
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.util.TextUtils;
+import jp.wasabeef.recyclerview.animators.SlideInUpAnimator;
 
 public class SearchActivity extends AppCompatActivity implements SettingsDialogFragment.SettingsDialogListener {
 
@@ -47,6 +51,7 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
     SimpleDateFormat paramSdf = new SimpleDateFormat("yyyyMMdd");
     SearchSetting ss = new SearchSetting("", "", false, false, false);
     private SwipeRefreshLayout swipeContainer;
+    private int searchPage;
     String searchQuery;
 
 
@@ -58,7 +63,7 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         setupViews();
-        onArticleSearch("", true);
+        onArticleSearch("", 0);
     }
 
     public void setupViews(){
@@ -68,9 +73,13 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
         //gvResults.setAdapter(articleAdapter);
         rvArticle = (RecyclerView) findViewById(R.id.rvNYTSearch);
         rvArticle.setAdapter(articleAdapter);
+
         StaggeredGridLayoutManager gridLayoutManager = new StaggeredGridLayoutManager(3, StaggeredGridLayoutManager.VERTICAL);
         gridLayoutManager.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS);
         rvArticle.setLayoutManager(gridLayoutManager);
+        SpacesItemDecoration decoration = new SpacesItemDecoration(16);
+        rvArticle.addItemDecoration(decoration);
+        rvArticle.setItemAnimator(new SlideInUpAnimator());
 
         // Lookup the swipe container view
         swipeContainer = (SwipeRefreshLayout) findViewById(R.id.swipeContainer);
@@ -78,7 +87,7 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
         swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener(){
             @Override
             public void onRefresh() {
-                onArticleSearch(searchQuery, true);
+                onArticleSearch(searchQuery, 0);
             }
         });
         // Configure the refreshing colors
@@ -87,7 +96,14 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
                 android.R.color.holo_orange_light,
                 android.R.color.holo_red_light);
 
-
+        // Add the scroll listener
+        rvArticle.addOnScrollListener(new EndlessRecyclerViewScrollListener(gridLayoutManager) {
+            @Override
+            public void onLoadMore(int page, int totalItemsCount) {
+                searchPage++;
+                onArticleSearch(searchQuery, searchPage);
+            }
+        });
     }
 
     @Override
@@ -103,14 +119,14 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
             public boolean onQueryTextSubmit(String query) {
                 searchView.clearFocus();
                 searchQuery = query;
-                onArticleSearch(query, true);
+                onArticleSearch(query, 0);
                 return true;
             }
 
             @Override
             public boolean onQueryTextChange(String query) {
                 if(query.trim() == ""){
-                    onArticleSearch("", true);
+                    onArticleSearch("", 0);
                     return true;
                 }else {
                     return false;
@@ -143,8 +159,8 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
         }
     }
 
-    public void onArticleSearch(String query, final boolean isNew) {
-        //if(NetworkUtil.isNetworkConnected(SearchActivity.this)) {
+    public void onArticleSearch(String query, final int pageNumber) {
+        if(NetworkUtil.isNetworkConnected(SearchActivity.this)) {
             //String query = etQuery.getText().toString();
             client = new AsyncHttpClient();
             String url = "https://api.nytimes.com/svc/search/v2/articlesearch.json";
@@ -162,7 +178,12 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
             if(!TextUtils.isEmpty(ss.getSortOrder())) {
                 params.put("sort", ss.getSortOrder());
             }
-            params.put("page", 0);
+            if(pageNumber == 0) {
+                params.put("page", 0);
+            }else{
+                searchPage = pageNumber;
+                params.put("page", pageNumber);
+            }
             if(!TextUtils.isEmpty(query)) {
                 params.put("q", query);
             }
@@ -193,16 +214,17 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
                     JSONArray articleJsonResults = null;
                     try {
                         articleJsonResults = response.getJSONObject("response").getJSONArray("docs");
-                        if(isNew) {
+                        if(pageNumber == 0) {
                             articles.clear();
                             articleAdapter.clear();
                         }
-                        int curSize = articleAdapter.getItemCount();
                         articles.addAll(Article.fromJsonArray(articleJsonResults));
-                        if(isNew){
+                        if(pageNumber == 0){
+                            searchPage = 0;
                             articleAdapter.notifyDataSetChanged();
                         }else {
-                            articleAdapter.notifyItemRangeInserted(curSize, articleJsonResults.length());
+                            articleAdapter.notifyItemInserted(articleJsonResults.length()-1);
+                            //rvArticle.scrollToPosition(articleAdapter.getItemCount()-1);
                         }
                         swipeContainer.setRefreshing(false);
                     } catch (JSONException e) {
@@ -215,7 +237,7 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
                     super.onFailure(statusCode, headers, throwable, errorResponse);
                 }
             });
-        //}
+        }
 
     }
 

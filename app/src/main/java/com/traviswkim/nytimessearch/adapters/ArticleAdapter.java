@@ -7,13 +7,13 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 import com.traviswkim.nytimessearch.R;
 import com.traviswkim.nytimessearch.activities.ArticleActivity;
 import com.traviswkim.nytimessearch.models.Article;
+import com.traviswkim.nytimessearch.viewholders.ViewHolderArticle;
+import com.traviswkim.nytimessearch.viewholders.ViewHolderArticleText;
 
 import org.parceler.Parcels;
 
@@ -22,56 +22,12 @@ import java.util.List;
 /**
  * Created by traviswkim on 7/28/16.
  */
-public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ViewHolder> {
-
-    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
-        //DynamicHeightImageView ivImage;
-        public ImageView ivCover;
-        public TextView tvTitle;
-        public TextView tvSnippet;
-
-        public ViewHolder(View itemView){
-            super(itemView);
-            ivCover = (ImageView) itemView.findViewById(R.id.ivImage);
-            tvTitle = (TextView) itemView.findViewById(R.id.tvTitle);
-            tvSnippet = (TextView) itemView.findViewById(R.id.tvSnippet);
-            itemView.setOnClickListener(this);
-        }
-
-        // Handles the row being being clicked
-        @Override
-        public void onClick(View view) {
-            int position = getLayoutPosition(); // gets item position
-            Article article = mArticles.get(position);
-
-            Intent i = new Intent(mContext, ArticleActivity.class);
-            i.putExtra("article", Parcels.wrap(article));
-            mContext.startActivity(i);
-        }
-        /*
-        @Override
-        public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-            ivImage = new DynamicHeightImageView(mContext);
-            // Calculate the image ratio of the loaded bitmap
-            float ratio = (float) bitmap.getHeight() / (float) bitmap.getWidth();
-            // Set the ratio for the image
-            ivImage.setHeightRatio(ratio);
-            // Load the image into the view
-            ivImage.setImageBitmap(bitmap);
-        }
-        @Override
-        public void onBitmapFailed(Drawable errorDrawable) {
-            Log.d("HIYA", "onBitmapFailed");
-        }
-        @Override
-        public void onPrepareLoad(Drawable placeHolderDrawable) {
-            Log.d("HIYA", "onPrepareLoad");
-        }
-        */
-    }
+public class ArticleAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
 
     private List<Article> mArticles;
     private Context mContext;
+    private final int ARTICLE = 0, ARTICLE_TEXT = 1;
+
     public ArticleAdapter(Context context, List<Article> articles) {
         mArticles = articles;
         mContext = context;
@@ -81,43 +37,126 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ViewHold
     }
 
     @Override
-    public ArticleAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public int getItemViewType(int position) {
+        Article article = mArticles.get(position);
+        if(TextUtils.isEmpty(article.getWebUrl())){
+            return ARTICLE_TEXT;
+        }else{
+            return ARTICLE;
+        }
+    }
+    @Override
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        RecyclerView.ViewHolder viewHolder;
         Context context = parent.getContext();
         LayoutInflater inflater = LayoutInflater.from(context);
 
-        // Inflate the custom layout
-        View articleView = inflater.inflate(R.layout.item_article_result, parent, false);
-
-        // Return a new holder instance
-        ViewHolder viewHolder = new ViewHolder(articleView);
+        switch (viewType){
+            case ARTICLE:
+                View viewImage = inflater.inflate(R.layout.layout_viewholderarticle, parent, false);
+                viewHolder = new ViewHolderArticle(viewImage);
+                break;
+            case ARTICLE_TEXT:
+                View viewText = inflater.inflate(R.layout.layout_viewholderarticletext, parent, false);
+                viewHolder = new ViewHolderArticleText(viewText);
+                break;
+            default:
+                View viewDefault = inflater.inflate(R.layout.layout_viewholderarticletext, parent, false);
+                viewHolder = new ViewHolderArticleText(viewDefault);
+                break;
+        }
         return viewHolder;
     }
 
     // Involves populating data into the item through holder
     @Override
-    public void onBindViewHolder(ArticleAdapter.ViewHolder viewHolder, int position) {
+    public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int position) {
+
+        switch (viewHolder.getItemViewType()) {
+            case ARTICLE:
+                ViewHolderArticle vha = (ViewHolderArticle) viewHolder;
+                configureViewHolderArticle(vha, position);
+                break;
+            case ARTICLE_TEXT:
+                ViewHolderArticleText vhat = (ViewHolderArticleText) viewHolder;
+                configureViewHolderArticleText(vhat, position);
+                break;
+            default:
+                ViewHolderArticleText vhdefault = (ViewHolderArticleText) viewHolder;
+                configureViewHolderArticleText(vhdefault, position);
+                break;
+        }
+    }
+
+    public void configureViewHolderArticle(ViewHolderArticle viewHolderArticle, final int position){
         // Get the data model based on position
         Article article = mArticles.get(position);
+        if(article != null){
+            //Populate the thumbnail image
+            //Remote download the image in the background
+            String thumbnail = article.getThumbnail();
 
-        // Set item views based on your views and data model
-        //ImageView ivCover = viewHolder.ivCover;
-        TextView tvTitle = viewHolder.tvTitle;
-        TextView tvSnippet = viewHolder.tvSnippet;
-        //Clear out recycled image from convertView from last time
-        //ivCover.setImageResource(0);
+            if(TextUtils.isEmpty(thumbnail)){
+                viewHolderArticle.ivCover.setImageResource(0);
+            }else{
+                Picasso.with(getContext()).load(thumbnail)
+                        .placeholder(R.mipmap.ic_launcher)
+                        .into(viewHolderArticle.ivCover);
+            }
 
-        //Populate the thumbnail image
-        //Remote download the image in the background
-        String thumbnail = article.getThumbnail();
+            if(TextUtils.isEmpty(article.getHeadline())){
+                viewHolderArticle.tvTitle.setText("");
+            }else{
+                viewHolderArticle.tvTitle.setText(article.getHeadline());
+            }
 
-        if(!TextUtils.isEmpty(thumbnail)){
-            Picasso.with(getContext()).load(thumbnail)
-                    .placeholder(R.mipmap.ic_launcher)
-                    .into(viewHolder.ivCover);
+            if(TextUtils.isEmpty(article.getSnippet())){
+                viewHolderArticle.tvSnippet.setText("");
+            }else{
+                viewHolderArticle.tvSnippet.setText(article.getSnippet());
+            }
+
+            viewHolderArticle.itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Article article = mArticles.get(position);
+                    Intent i = new Intent(mContext, ArticleActivity.class);
+                    i.putExtra("article", Parcels.wrap(article));
+                    mContext.startActivity(i);
+                }
+            });
+
         }
-        tvTitle.setText(article.getHeadline());
-        tvSnippet.setText(article.getSnippet());
+
     }
+    public void configureViewHolderArticleText(ViewHolderArticleText viewHolderArticleText, final int position){
+        // Get the data model based on position
+        Article article = mArticles.get(position);
+        if(article != null){
+            if(TextUtils.isEmpty(article.getHeadline())){
+                viewHolderArticleText.tvTitle.setText("");
+            }else{
+                viewHolderArticleText.tvTitle.setText(article.getHeadline());
+            }
+
+            if(TextUtils.isEmpty(article.getSnippet())){
+                viewHolderArticleText.tvSnippet.setText("");
+            }else{
+                viewHolderArticleText.tvSnippet.setText(article.getSnippet());
+            }
+        }
+
+        viewHolderArticleText.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Article article = mArticles.get(position);
+                Intent i = new Intent(mContext, ArticleActivity.class);
+                i.putExtra("article", Parcels.wrap(article));
+                mContext.startActivity(i);
+            }
+        });
+    }
+
     // Returns the total count of items in the list
     @Override
     public int getItemCount() {
