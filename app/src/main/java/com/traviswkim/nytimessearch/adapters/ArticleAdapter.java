@@ -8,7 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.squareup.picasso.Picasso;
+import com.bumptech.glide.Glide;
 import com.traviswkim.nytimessearch.R;
 import com.traviswkim.nytimessearch.activities.ArticleActivity;
 import com.traviswkim.nytimessearch.models.Article;
@@ -97,23 +97,25 @@ public class ArticleAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             String thumbnail = article.getThumbnail();
 
             if(TextUtils.isEmpty(thumbnail)){
-                viewHolderArticle.ivCover.setImageResource(0);
+                viewHolderArticle.getIvCover().setImageResource(0);
             }else{
-                Picasso.with(getContext()).load(thumbnail)
+                Glide.with(getContext())
+                        .load(thumbnail)
                         .placeholder(R.mipmap.ic_launcher)
-                        .into(viewHolderArticle.ivCover);
+                        .centerCrop()
+                        .into(viewHolderArticle.getIvCover());
             }
 
             if(TextUtils.isEmpty(article.getHeadline())){
-                viewHolderArticle.tvTitle.setText("");
+                viewHolderArticle.getTvTitle().setText("");
             }else{
-                viewHolderArticle.tvTitle.setText(article.getHeadline());
+                viewHolderArticle.getTvTitle().setText(article.getHeadline());
             }
 
             if(TextUtils.isEmpty(article.getSnippet())){
-                viewHolderArticle.tvSnippet.setText("");
+                viewHolderArticle.getTvSnippet().setText("");
             }else{
-                viewHolderArticle.tvSnippet.setText(article.getSnippet());
+                viewHolderArticle.getTvSnippet().setText(article.getSnippet());
             }
 
             viewHolderArticle.itemView.setOnClickListener(new View.OnClickListener() {
@@ -134,15 +136,15 @@ public class ArticleAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         Article article = mArticles.get(position);
         if(article != null){
             if(TextUtils.isEmpty(article.getHeadline())){
-                viewHolderArticleText.tvTitle.setText("");
+                viewHolderArticleText.getTvTitle().setText("");
             }else{
-                viewHolderArticleText.tvTitle.setText(article.getHeadline());
+                viewHolderArticleText.getTvTitle().setText(article.getHeadline());
             }
 
             if(TextUtils.isEmpty(article.getSnippet())){
-                viewHolderArticleText.tvSnippet.setText("");
+                viewHolderArticleText.getTvSnippet().setText("");
             }else{
-                viewHolderArticleText.tvSnippet.setText(article.getSnippet());
+                viewHolderArticleText.getTvSnippet().setText(article.getSnippet());
             }
         }
 

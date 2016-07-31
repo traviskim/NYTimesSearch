@@ -23,15 +23,23 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+import butterknife.Unbinder;
+
 /**
  * Created by traviswkim on 7/8/16.
  */
 public class SettingsDialogFragment extends DialogFragment {
-    private EditText mBeginDate;
-    private Spinner mSortOrder;
-    private CheckBox mArts;
-    private CheckBox mFashionStyle;
-    private CheckBox mSports;
+    @BindView(R.id.etBeginDate) EditText mBeginDate;
+    @BindView(R.id.spnSortOrder) Spinner mSortOrder;
+    @BindView(R.id.cbArts) CheckBox mArts;
+    @BindView(R.id.cbFasionStyle) CheckBox mFashionStyle;
+    @BindView(R.id.cbSports) CheckBox mSports;
+    @BindView(R.id.btnSave) Button mSubmit;
+    @BindView(R.id.btnCancel) Button mCancel;
+    private Unbinder unBinder;
     private final String myFormat = "MM/dd/yyyy";
     SimpleDateFormat spf = new SimpleDateFormat(myFormat);
     Calendar myCalendar = Calendar.getInstance();
@@ -63,14 +71,7 @@ public class SettingsDialogFragment extends DialogFragment {
 
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        mBeginDate = (EditText) view.findViewById(R.id.etBeginDate);
-        mSortOrder = (Spinner) view.findViewById(R.id.spnSortOrder);
-        mArts = (CheckBox) view.findViewById(R.id.cbArts);
-        mFashionStyle = (CheckBox) view.findViewById(R.id.cbFasionStyle);
-        mSports = (CheckBox) view.findViewById(R.id.cbSports);
-        Button mSubmit = (Button) view.findViewById(R.id.btnSave);
-        Button mCancel = (Button) view.findViewById(R.id.btnCancel);
+        unBinder = ButterKnife.bind(this, view);
 
         // Fetch arguments from bundle
         final String beginDate = getArguments().getString("beginDate", "");
@@ -88,22 +89,6 @@ public class SettingsDialogFragment extends DialogFragment {
 
         //Set previous values if exits
         mBeginDate.setText(beginDate);
-        mBeginDate.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-
-                if(selectedDate != null){
-                    myCalendar.setTime(selectedDate);
-                }
-                int year = myCalendar.get(Calendar.YEAR);
-                int month = myCalendar.get(Calendar.MONTH);
-                int day = myCalendar.get(Calendar.DAY_OF_MONTH);
-                DatePickerDialog dpd = new DatePickerDialog(getActivity(), date, year, month, day);
-                //dpd.getDatePicker().setMinDate(today);
-                dpd.show();
-            }
-        });
-
         ArrayAdapter<CharSequence> sortOrderAdapter = ArrayAdapter.createFromResource(getActivity().getBaseContext(), R.array.sortorder_array, android.R.layout.simple_spinner_item);
         mSortOrder.setAdapter(sortOrderAdapter);
         int selectedPos = sortOrderAdapter.getPosition(sortOrder);
@@ -112,24 +97,6 @@ public class SettingsDialogFragment extends DialogFragment {
         mArts.setChecked(newsDeskValues[0]);
         mFashionStyle.setChecked((newsDeskValues[1]));
         mSports.setChecked((newsDeskValues[2]));
-
-        mSubmit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                SettingsDialogListener listener = (SettingsDialogListener)getActivity();
-                SearchSetting newSs = new SearchSetting(mBeginDate.getText().toString(), mSortOrder.getSelectedItem().toString(), mArts.isChecked(), mFashionStyle.isChecked(), mSports.isChecked());
-                listener.onFinishInputDialog(newSs);
-                dismiss();
-            }
-        });
-
-        mCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dismiss();
-            }
-        });
-        //getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
     }
 
     DatePickerDialog.OnDateSetListener date = new DatePickerDialog.OnDateSetListener() {
@@ -146,5 +113,37 @@ public class SettingsDialogFragment extends DialogFragment {
     private void updateBeginDate() {
         SimpleDateFormat sdf = new SimpleDateFormat(myFormat, Locale.US);
         mBeginDate.setText(sdf.format(myCalendar.getTime()));
+    }
+
+    @OnClick(R.id.etBeginDate)
+    public void selectBeginDate(EditText et){
+        if(selectedDate != null){
+            myCalendar.setTime(selectedDate);
+        }
+        int year = myCalendar.get(Calendar.YEAR);
+        int month = myCalendar.get(Calendar.MONTH);
+        int day = myCalendar.get(Calendar.DAY_OF_MONTH);
+        DatePickerDialog dpd = new DatePickerDialog(getActivity(), date, year, month, day);
+        //dpd.getDatePicker().setMinDate(today);
+        dpd.show();
+    }
+
+    @OnClick(R.id.btnSave)
+    public void saveSettings(Button btn){
+        SettingsDialogListener listener = (SettingsDialogListener)getActivity();
+        SearchSetting newSs = new SearchSetting(mBeginDate.getText().toString(), mSortOrder.getSelectedItem().toString(), mArts.isChecked(), mFashionStyle.isChecked(), mSports.isChecked());
+        listener.onFinishInputDialog(newSs);
+        dismiss();
+    }
+
+    @OnClick(R.id.btnCancel)
+    public void canCelSettings(Button btn){
+        dismiss();
+    }
+
+    @Override
+    public void onDestroyView(){
+        super.onDestroyView();
+        unBinder.unbind();
     }
 }

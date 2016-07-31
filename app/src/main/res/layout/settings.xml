@@ -35,13 +35,15 @@
         android:layout_marginTop="50dp" />
 
     <Spinner
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/spnSortOrder"
         android:layout_alignTop="@+id/textView2"
         android:layout_toRightOf="@+id/textView2"
         android:layout_toEndOf="@+id/textView2"
-        android:entries="@array/sortorder_array" />
+        android:entries="@array/sortorder_array"
+        android:backgroundTint="#d11f08"
+        android:padding="5dp"/>
 
     <TextView
         android:layout_width="wrap_content"

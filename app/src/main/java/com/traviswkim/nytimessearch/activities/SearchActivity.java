@@ -35,6 +35,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.util.TextUtils;
 import jp.wasabeef.recyclerview.animators.SlideInUpAnimator;
@@ -42,15 +44,14 @@ import jp.wasabeef.recyclerview.animators.SlideInUpAnimator;
 public class SearchActivity extends AppCompatActivity implements SettingsDialogFragment.SettingsDialogListener {
 
     ArrayList<Article> articles;
-    //ArrayAdapter<Article> articleAdapter;
-    RecyclerView rvArticle;
+    @BindView(R.id.rvNYTSearch) RecyclerView rvArticle;
+    @BindView(R.id.swipeContainer) SwipeRefreshLayout swipeContainer;
+    @BindView(R.id.toolbar) Toolbar toolbar;
     ArticleAdapter articleAdapter;
-    //GridView gvResults;
     AsyncHttpClient client;
     SimpleDateFormat dspSdf = new SimpleDateFormat("MM/dd/yyyy");
     SimpleDateFormat paramSdf = new SimpleDateFormat("yyyyMMdd");
     SearchSetting ss = new SearchSetting("", "", false, false, false);
-    private SwipeRefreshLayout swipeContainer;
     private int searchPage;
     String searchQuery;
 
@@ -60,18 +61,15 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
         setupViews();
+        setSupportActionBar(toolbar);
         onArticleSearch("", 0);
     }
 
     public void setupViews(){
-        //gvResults = (GridView) findViewById(R.id.gvResults);
         articles = new ArrayList<>();
+        ButterKnife.bind(this);
         articleAdapter = new ArticleAdapter(this, articles);
-        //gvResults.setAdapter(articleAdapter);
-        rvArticle = (RecyclerView) findViewById(R.id.rvNYTSearch);
         rvArticle.setAdapter(articleAdapter);
 
         StaggeredGridLayoutManager gridLayoutManager = new StaggeredGridLayoutManager(3, StaggeredGridLayoutManager.VERTICAL);
@@ -81,8 +79,6 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
         rvArticle.addItemDecoration(decoration);
         rvArticle.setItemAnimator(new SlideInUpAnimator());
 
-        // Lookup the swipe container view
-        swipeContainer = (SwipeRefreshLayout) findViewById(R.id.swipeContainer);
         // Setup refresh listener which triggers new data loading
         swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener(){
             @Override
@@ -148,9 +144,6 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
             case R.id.action_search:
                 return true;
             case R.id.action_settings:
-                //FragmentManager fm = getSupportFragmentManager();
-                //SettingsDialogFragment editTaskDialogFragment = SettingsDialogFragment.newInstance(ss);
-                //editTaskDialogFragment.show(fm, "fragment_edit_name");
                 showEditDialog();
                 return true;
             default:

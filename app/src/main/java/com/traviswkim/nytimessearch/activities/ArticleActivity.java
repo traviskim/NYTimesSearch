@@ -16,21 +16,25 @@ import com.traviswkim.nytimessearch.models.Article;
 
 import org.parceler.Parcels;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 public class ArticleActivity extends AppCompatActivity {
     private ShareActionProvider miShareAction;
     private Intent shareIntent;
+    @BindView(R.id.toolbar) Toolbar toolbar;
+    @BindView(R.id.wvArticle) WebView webView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_article);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        ButterKnife.bind(this);
         setSupportActionBar(toolbar);
         getSupportActionBar().setHomeButtonEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         Article article = (Article) Parcels.unwrap(getIntent().getParcelableExtra("article"));
-        WebView webView = (WebView) findViewById(R.id.wvArticle);
         webView.setWebViewClient(new WebViewClient(){
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
@@ -49,10 +53,8 @@ public class ArticleActivity extends AppCompatActivity {
         shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("text/plain");
 
-        //get reference to webview
-        WebView wvArticle = (WebView) findViewById(R.id.wvArticle);
         //pass in the URL currently being used by the WebView
-        shareIntent.putExtra(Intent.EXTRA_TEXT, wvArticle.getUrl());
+        shareIntent.putExtra(Intent.EXTRA_TEXT, webView.getUrl());
 
         miShareAction.setShareIntent(Intent.createChooser(shareIntent, getResources().getText(R.string.send_to)));
         //return super.onCreateOptionsMenu(menu);

@@ -1,32 +1,26 @@
 package com.traviswkim.nytimessearch.viewholders;
 
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
-import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
 import com.traviswkim.nytimessearch.R;
 import com.traviswkim.nytimessearch.utils.DynamicHeightImageView;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 /**
  * Created by traviswkim on 7/29/16.
  */
-public class ViewHolderArticle extends RecyclerView.ViewHolder implements Target{
-    public DynamicHeightImageView ivCover;
-    //public ImageView ivCover;
-    public TextView tvTitle;
-    public TextView tvSnippet;
+public class ViewHolderArticle extends RecyclerView.ViewHolder{
+    @BindView(R.id.ivImage) DynamicHeightImageView ivCover;
+    @BindView(R.id.tvTitle) TextView tvTitle;
+    @BindView(R.id.tvSnippet) TextView tvSnippet;
 
     public ViewHolderArticle(View itemView){
         super(itemView);
-        //ivCover = (ImageView) itemView.findViewById(R.id.ivImage);
-        ivCover = (DynamicHeightImageView) itemView.findViewById(R.id.ivImage);
-        tvTitle = (TextView) itemView.findViewById(R.id.tvTitle);
-        tvSnippet = (TextView) itemView.findViewById(R.id.tvSnippet);
+        ButterKnife.bind(this, itemView);
         //itemView.setOnClickListener(this);
     }
 
@@ -52,24 +46,6 @@ public class ViewHolderArticle extends RecyclerView.ViewHolder implements Target
 
     public void setTvSnippet(TextView tvSnippet) {
         this.tvSnippet = tvSnippet;
-        }
-
-        @Override
-        public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-            // Calculate the image ratio of the loaded bitmap
-            float ratio = (float) bitmap.getHeight() / (float) bitmap.getWidth();
-            // Set the ratio for the image
-            ivCover.setHeightRatio(ratio);
-            // Load the image into the view
-            ivCover.setImageBitmap(bitmap);
-        }
-        @Override
-        public void onBitmapFailed(Drawable errorDrawable) {
-            Log.d("HIYA", "onBitmapFailed");
-        }
-        @Override
-        public void onPrepareLoad(Drawable placeHolderDrawable) {
-            Log.d("HIYA", "onPrepareLoad");
         }
 
 }
