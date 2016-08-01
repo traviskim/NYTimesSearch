@@ -73,7 +73,7 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
         rvArticle.setAdapter(articleAdapter);
 
         StaggeredGridLayoutManager gridLayoutManager = new StaggeredGridLayoutManager(3, StaggeredGridLayoutManager.VERTICAL);
-        gridLayoutManager.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS);
+        gridLayoutManager.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_NONE);
         rvArticle.setLayoutManager(gridLayoutManager);
         SpacesItemDecoration decoration = new SpacesItemDecoration(16);
         rvArticle.addItemDecoration(decoration);

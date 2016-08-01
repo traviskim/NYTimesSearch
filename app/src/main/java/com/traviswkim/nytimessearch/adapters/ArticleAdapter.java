@@ -102,7 +102,7 @@ public class ArticleAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 Glide.with(getContext())
                         .load(thumbnail)
                         .placeholder(R.mipmap.ic_launcher)
-                        .centerCrop()
+                        .fitCenter()
                         .into(viewHolderArticle.getIvCover());
             }
 
@@ -118,14 +118,11 @@ public class ArticleAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 viewHolderArticle.getTvSnippet().setText(article.getSnippet());
             }
 
-            viewHolderArticle.itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Article article = mArticles.get(position);
+            viewHolderArticle.itemView.setOnClickListener(v -> {
+                    //Article article = mArticles.get(position);
                     Intent i = new Intent(mContext, ArticleActivity.class);
                     i.putExtra("article", Parcels.wrap(article));
                     mContext.startActivity(i);
-                }
             });
 
         }
@@ -148,14 +145,11 @@ public class ArticleAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             }
         }
 
-        viewHolderArticleText.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Article article = mArticles.get(position);
-                Intent i = new Intent(mContext, ArticleActivity.class);
-                i.putExtra("article", Parcels.wrap(article));
-                mContext.startActivity(i);
-            }
+        viewHolderArticleText.itemView.setOnClickListener(v-> {
+            //Article article = mArticles.get(position);
+            Intent i = new Intent(mContext, ArticleActivity.class);
+            i.putExtra("article", Parcels.wrap(article));
+            mContext.startActivity(i);
         });
     }
 

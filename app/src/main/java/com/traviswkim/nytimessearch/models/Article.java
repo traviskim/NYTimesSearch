@@ -1,5 +1,8 @@
 package com.traviswkim.nytimessearch.models;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -7,12 +10,20 @@ import org.parceler.Parcel;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by traviswkim on 7/24/16.
  */
 @Parcel
 public class Article implements Serializable {
+
+    String webUrl;
+    String headline;
+    String thumbnail;
+    String snippet;
+    List<Article> articles;
+
     public String getWebUrl() {
         return webUrl;
     }
@@ -21,20 +32,15 @@ public class Article implements Serializable {
         return headline;
     }
 
-    public String getThumbnail() {
-        return thumbnail;
-    }
+    public String getThumbnail() { return thumbnail; }
 
     public String getSnippet() {
         return snippet;
     }
 
-    String webUrl;
-    String headline;
-    String thumbnail;
-    String snippet;
-
-    public Article(){}
+    public Article(){
+        articles = new ArrayList<Article>();
+    }
 
     public Article(JSONObject jsonObject){
         try {
@@ -65,5 +71,10 @@ public class Article implements Serializable {
             }
         }
         return results;
+    }
+    public static ArrayList<Article> parseJSON(String response) {
+        Gson gson = new GsonBuilder().create();
+        ArrayList articleResponse = gson.fromJson(response, ArrayList.class);
+        return articleResponse;
     }
 }
