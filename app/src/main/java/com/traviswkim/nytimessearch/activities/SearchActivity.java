@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.ProgressBar;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
@@ -54,6 +55,8 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
     SearchSetting ss = new SearchSetting("", "", false, false, false);
     private int searchPage;
     String searchQuery;
+    // Instance of the progress action-view
+    MenuItem miActionProgressItem;
 
 
 
@@ -72,7 +75,7 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
         articleAdapter = new ArticleAdapter(this, articles);
         rvArticle.setAdapter(articleAdapter);
 
-        StaggeredGridLayoutManager gridLayoutManager = new StaggeredGridLayoutManager(3, StaggeredGridLayoutManager.VERTICAL);
+        StaggeredGridLayoutManager gridLayoutManager = new StaggeredGridLayoutManager(4, StaggeredGridLayoutManager.VERTICAL);
         gridLayoutManager.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_NONE);
         rvArticle.setLayoutManager(gridLayoutManager);
         SpacesItemDecoration decoration = new SpacesItemDecoration(16);
@@ -113,6 +116,7 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
+                showProgressBarInMenu();
                 searchView.clearFocus();
                 searchQuery = query;
                 onArticleSearch(query, 0);
@@ -150,6 +154,16 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
                 return super.onOptionsItemSelected(item);
 
         }
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        // Store instance of the menu item containing progress
+        miActionProgressItem = menu.findItem(R.id.miActionProgress);
+        // Extract the action-view from the menu item
+        ProgressBar v =  (ProgressBar) MenuItemCompat.getActionView(miActionProgressItem);
+        // Return to finish
+        return super.onPrepareOptionsMenu(menu);
     }
 
     public void onArticleSearch(String query, final int pageNumber) {
@@ -220,6 +234,7 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
                             //rvArticle.scrollToPosition(articleAdapter.getItemCount()-1);
                         }
                         swipeContainer.setRefreshing(false);
+                        hideProgressBarInMenu();
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -228,6 +243,7 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
                 @Override
                 public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
                     super.onFailure(statusCode, headers, throwable, errorResponse);
+                    hideProgressBarInMenu();
                 }
             });
         }
@@ -246,5 +262,15 @@ public class SearchActivity extends AppCompatActivity implements SettingsDialogF
         this.ss.setArts(newSs.isArts());
         this.ss.setFasionStyle(newSs.isFasionStyle());
         this.ss.setSports(newSs.isSports());
+    }
+
+    public void showProgressBarInMenu() {
+        // Show progress item
+        miActionProgressItem.setVisible(true);
+    }
+
+    public void hideProgressBarInMenu() {
+        // Hide progress item
+        miActionProgressItem.setVisible(false);
     }
 }
